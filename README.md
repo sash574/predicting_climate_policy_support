@@ -39,7 +39,114 @@ predicting_climate_policy_support/
 
 ## Project Summary and Evaluation
 
+### I. Application Area and Goals
 
+Given the strong influence of religion in U.S. politics and the increasing importance of climate change in political debates, the relationships between religion, politics, and views about climate change policies are of great interest. Therefore, this project aims to predict support for climate change regulations using survey respondents’ full personal profile with a primary focus on the contributions of religious affiliations, followed by political and socio-demographic attributes.
+
+Past research indicates that differences in climate change beliefs and policy support are driven by different denominations and approaches to faith (Pepper and Leonard 2016; Nche 2020). One reason for this might be religion’s large institutional and individual influence as it provides a lens through which believers are interpreting and interacting with the world around them (Chu et al. 2025; Jenkins et al. 2018). Furthermore, political affiliations and attitudes significantly shape climate change attitudes. For example, in the United States, Democrats lean more pro-environment while Republicans are more likely to express anti-environment attitudes and beliefs, highlighting a politically polarized view on climate change (Smith et al. 2024).
+
+A predictive model of climate change regulation support can provide great insight into important features and contributing factors among U.S. adults. Combined with this projects’ specific focus on the influence of religious attributes, the model offers leverage for targeted policy making and, more importantly, to engage in interreligious and interdisciplinary dialogues and collaborations to decrease the negative impacts of the climate crisis. In short, this predictive model can be a great tool for not only academics in future research but also policy and law makers in the field of environmental
+transformations.
+
+### II. Profile of the Dataset
+
+The data used for this project is provided by the Pew Research Center in the context of the 2023-24 Religious Landscape Study (RLS) (Center 2025a). It is a national cross-sectional survey of U.S. adults. The RLS was conducted in English and Spanish from July 17, 2023 to March 4, 2024 among a nationally representative sample of 36,908 U.S. adults. It is based on a geographically stratified address-based sample that was drawn from the United States Postal Service’s Computerized Delivery Sequence file. As of today, a public-use file (PUF) is available to all users at www.pewresearch.org.
+
+In total, this dataset contains 154 features (including the Restricted Use File variables with 100 percent missing values) that are diverse in nature and span multiple types. Together, they are covering the survey respondents’ full profile with a focus on religious beliefs and affiliation. Additionally, the dataset contains 500 full-sample and replicated raked weights (hereafter referred to as RAKED WEIGHTS), though these are out of scope for this project.
+
+The variable of interest, **QB2C**, asks for respondents’ attitude towards climate change regulations and whether they hurt the economy or are worth their cost. The class variable follows a roughly 2 to 1 ratio of survey respondents in favor of climate change regulations versus against it. In short, it measures pro- versus anti-climate change regulation attitudes.
+
+| Value | Meaning | N | Planned Encoding |
+| ----- | ------- | - | ---------------- |
+| 1 | Stricter environmental laws cost too many jobs and hurt the economy. | 12,761 | 0 (Anti-Regulation) |
+| 2 | Stricter environmental laws are worth the cost. | 23,364 | 1 (Pro-Regulation) |
+| 99 | Don't know / Refused | 783 | NaN (drop)
+
+**Table 1**: Class Variable Codebook, Distribution and Planned Encoding (N = 36,908)
+
+Overall, the RLS dataset’s large sample size, rich variety of variables and national representativeness allows for a comprehensive view of the survey respondents’ profile and is thereby highly suitable for predicting and uncovering broader patterns in climate change regulation support.
+
+### III. Preprocessing
+
+First, sophisticated preprocessing was performed in three phases, namely data cleaning, feature engineering and feature preparation as well as selection. Doing so, we created the following pipeline that prevents data leakage and allows for adjustment depending on the model (e.g. normalization or feature selection):
+
+Phase 1: Data Cleaning (Before Train/Test Split)
+
+1. Missing Values: Drop structural/restricted columns (23 vars)
+2. Hierarchical Variables: Merge UNAFFILDETAIL→CURREL_NEW, PARTYLN→POLITICAL_ATTITUDE
+3. Duplicates & Straightlining: Check for duplicate respondents
+4. Special Codes: Recode 99s, 900000s to NaN
+5. Ordinal Reversals: Ensure consistent directionality (higher = more)
+6. Binary Recoding: GOD → GOD_binary, QB2C → QB2C_binary
+7. Composite Indices: Build 4 indices from 16 variables
+
+Phase 2: Overall Modeling Preparation (After Train/Test Split)
+
+8. Train/Test Split: 80/20 stratified by QB2C_binary
+9. Imputation: Drop high-missingness variables (CLIM1A, RELCON_A-E, INC_SDT1, FRMREL), then median (ordinal) / mode (nominal) imputation (fit on train, transform both)
+
+Phase 3: Model-Specific Preparation (see `notebooks/03_modeling.ipynb`)
+
+10. Nominal Encoding: Dummy encoding with drop='first' (fit on train)
+11. Correlation Check: Remove highly correlated features (|r| > 0.7, drop less predictive)
+12. Class Imbalance: SMOTE / oversampling on train only (on encoded data)
+13. Feature Scaling: Standardization (fit on train)
+14. Feature Selection: SelectKBest with f_classif
+
+For details see `notebooks/02_preprocessing.ipynb` and `results/02_preprocessing_summary.md`.
+
+### IV. Data Mining Methods
+
+Five classifiers are employed and evaluated against a majority-vote baseline: Decision Tree, Random Forest, XGBoost, Logistic regression and SVM. The selection covers a single decision tree as the symbolic, rule-based approach and four non-symbolic alternatives, namely a regularized linear model (logistic regression), a kernel method (SVM), and two tree-based ensembles (one bagged (Random Forest), one boosted (XGBoost)). This selection allows comparison not only of predictive performance but also of how different inductive biases interact with the mixed ordinal-categorical structure of the RLS data.
+    
+Importantly, the 2 to 1 class imbalance in the target variable was addressed via random oversampling of the minority class. Crucially, oversampling was integrated into an ImbPipeline together with the model (and, where applicable, the scaler), so that resampling is performed independently within each cross-validation fold during hyperparameter tuning. This prevents information leakage from the validation fold into the training fold. The held-out test set is left at its original class distribution and is not resampled at any point.
+
+### V. Evaluation and Results
+
+To obtain reasonable performance estimates for the employed models, the data was divided into a training and test set with a ratio of 80 (28,888 units) to 20 (7,222 units). The split was stratified based on the target variable (climate change regulation support) so as not to skew the target's distribution (0: 35.3 percent, 1: 64.7 percent) across splits.
+
+Hyperparameter optimization and thorough model evaluation was carried out using random search with stratified 10-fold cross-validation, optimizing the macro-averaged F1-score. This primary metric was chosen as it balances precision and recall, providing a comprehensive measure on imbalanced datasets.
+
+| Model                       | Hyperparameter    | Parameter Distribution        | Best Parameters |
+| --------------------------- | ----------------- | ----------------------------- | --------------- |
+| Decision Tree               | max_depth         | randint(1, 30)                | 4               |
+|                             | min_samples_split | randint(2, 20)                | 9               |
+|                             | min_samples_leaf  | randint(1, 20)                | 18              |
+| Logistic Regression         | C                 | loguniform(10⁻³, 10²)         | 0.0507          |
+|                             | l1_ratio          | uniform(0, 1)                 | 0.1135          |
+| Random Forest               | n_estimators      | {1, 10, 20, 30, 50, 100, 150} | 150             |
+|                             | max_depth         | randint(1, 30)                | 26              |
+|                             | min_samples_leaf  | randint(1, 20)                | 3               |
+| Gradient Boosting (XGBoost) | n_estimators      | {1, 10, 20, 30, 50, 100, 150} | 150             |
+|                             | max_depth         | randint(1, 30)                | 5               |
+|                             | learning_rate     | {0.05, 0.1, 0.5, 1}           | 0.1             |
+| SVM                         | C                 | loguniform(10⁻², 10²)         | 21.37           |
+|                             | gamma             | loguniform(10⁻⁴, 10⁰)         | 7.07 × 10⁻⁴     |
+
+**Table 2**: Hyperparameter Tuning - Configurations and Best Parameters
+
+To ensure robust and comprehensive assessment of the model performances, a combination of metrics, as summarized in Table 3, are used to evaluate performance. Both single test-set point estimates from optimal hyperparameter settings as well as estimates based on stratified 10-fold cross-validation employed on the training set are reported.
+
+| Model                    | F1 (Macro) | Precision (Macro) | Recall (Macro) | Macro F1: Anti-Reg | Macro F1: Pro-Reg | ROC-AUC | CV-Scores (Train Only) |
+| ------------------------ | ---------- | ----------------- | -------------- | ------------------ | ----------------- | ------- | ---------------------- |
+| Majority-Vote Classifier | 0.2610     | 0.1765            | 0.5000         | 0.5219             | 0.0000            | 0.5000  | 0.2610                 |
+| Decision Tree            | 0.7542     | 0.7522            | 0.7566         | 0.6855             | 0.8230            | 0.8368  | 0.7569                 |
+| SVM                      | 0.7837     | 0.7800            | 0.8031         | 0.7407             | 0.8268            | 0.8795  | 0.7741                 |
+| Random Forest            | 0.7848     | 0.7820            | 0.7881         | 0.7253             | 0.8442            | 0.8837  | 0.7779                 |
+| Logistic Classifier      | 0.7859     | 0.7811            | 0.8025         | 0.7405             | 0.8313            | 0.8792  | 0.7737                 |
+| Gradient Boosting (XGB)  | 0.7864     | 0.7812            | 0.8012         | 0.7393             | 0.8334            | 0.8853  | 0.7772                 |
+
+**Table 3**: Modeling Results (*Note: The table is sorted by the overall macro-averaged F1 scores across models.*)
+
+All models perform significantly better than the majority vote baseline classifier (Macro F1 = 0.2610), indicating that meaningful patterns are successfully captured by the training data. However, model-wise performances, specifically Logistic Regression, Random Forest, XGBoost, and SVM, are fairly close to each other. This can be attributed to the effectiveness of the feature engineering process. As a result, even simple models are able to learn the decision boundary effectively, leaving limited room for more complex non-linear models to provide additional gains. This is supported by the consistent top feature importances across all models, as visible in Figure **XX**.
+
+![ROC Curves Comparison](results/03_evaluation_roc_curves.svg "Figure XX: ROC Curves Comparison")
+**Figure 1**: ROC Curves Comparison
+
+The Logistic Classifier is considered to be the best model in our classification tasks. It not only shows high predictive power nearly identical to XGBoost (as shown in Table 3), but also provides interpretability and simplicity according to Occam's Razor principle. On top of that, it achieves one of the highest performances in predicting the anti-regulation class. Further analysis of the feature importances of the Logistic Regression model highlights the great influence of both political and religious attributes on climate change regulation support, as hypothesized in this project.
+
+![Feature Importances Comparison](results/03_evaluation_feature_importance.svg "Figure XX: Comparison of Feature Importances Across Models")
+**Figure 2**: Comparison of Feature Importances Across Models
 
 ## Replication
 
