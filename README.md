@@ -2,7 +2,7 @@
 
 In this project, five different classifiers - a decision tree, a logistic classifier, a random forest, XGBoost and SVM - are used to predict climate change attitudes. More precisely, we predicted support for climate change regulations based on religious beliefs, political attitudes, and socio-demographic variables. The analysis is based on the Religious Landscape Study 2023-24 dataset by the Pew Research Center, comprising a representative sample of U.S. adults.
 
-> Importantly, this was a group project for a Data Mining university course. I contributed to the process as a whole, though my main contributions are the implementation and evaluation of the various classifiers (primarily the tree-based ones) as well as the theoretical framing and literature review.
+> Importantly, this was a group project for a Data Mining university course. I contributed to the process as a whole, though my main contributions are the implementation and evaluation of the various classifiers (primarily the tree-based ones) as well as the theoretical framing and literature review. This file and the entire repository is a summary and shortened version of our collaborative work and project report.
 
 This repository is structured as follows:
 ```
@@ -29,12 +29,17 @@ predicting_climate_policy_support/
 
 ## Outline
 - [Project Summary and Evaluation](#project-summary-and-evaluation)
+    - [I. Application Area and Goals](#i-application-area-and-goals)
+    - [II. Profile of the Dataset](#ii-profile-of-the-dataset)
+    - [III. Preprocessing](#iii-preprocessing)
+    - [IV. Data Mining Methods](#iv-data-mining-methods)
+    - [V. Evaluation and Results](#v-evaluation-and-results)
 - [Replication](#replication)
 - [Project Status](#project-status)
 
 ## Project Summary and Evaluation
 
-*will follow*
+
 
 ## Replication
 
