@@ -140,12 +140,12 @@ To ensure robust and comprehensive assessment of the model performances, a combi
 
 All models perform significantly better than the majority vote baseline classifier (Macro F1 = 0.2610), indicating that meaningful patterns are successfully captured by the training data. However, model-wise performances, specifically Logistic Regression, Random Forest, XGBoost, and SVM, are fairly close to each other. This can be attributed to the effectiveness of the feature engineering process. As a result, even simple models are able to learn the decision boundary effectively, leaving limited room for more complex non-linear models to provide additional gains. This is supported by the consistent top feature importances across all models, as visible in Figure **XX**.
 
-![ROC Curves Comparison](results/03_evaluation_roc_curves.svg "Figure XX: ROC Curves Comparison")
+![ROC Curves Comparison](results/03_evaluation_roc_curves.svg "Figure 1: ROC Curves Comparison")
 **Figure 1**: ROC Curves Comparison
 
 The Logistic Classifier is considered to be the best model in our classification tasks. It not only shows high predictive power nearly identical to XGBoost (as shown in Table 3), but also provides interpretability and simplicity according to Occam's Razor principle. On top of that, it achieves one of the highest performances in predicting the anti-regulation class. Further analysis of the feature importances of the Logistic Regression model highlights the great influence of both political and religious attributes on climate change regulation support, as hypothesized in this project.
 
-![Feature Importances Comparison](results/03_evaluation_feature_importance.svg "Figure XX: Comparison of Feature Importances Across Models")
+![Feature Importances Comparison](results/03_evaluation_feature_importance.svg "Figure 2: Comparison of Feature Importances Across Models")
 **Figure 2**: Comparison of Feature Importances Across Models
 
 ## Replication
